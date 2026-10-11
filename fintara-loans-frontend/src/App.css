@@ -32,6 +32,8 @@ button:disabled {
 }
 
 .page {
+  width: 100%;
+  min-width: 0;
   max-width: 1600px;
   margin: auto;
   padding: 28px 36px 48px;
@@ -326,6 +328,36 @@ textarea {
   padding: 12px 0;
   color: #778398;
   font-size: 13px;
+}
+
+.panel.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 24px;
+  text-align: left;
+}
+
+.panel.empty-state h3,
+.panel.empty-state p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.panel.empty-state h3,
+.panel.empty-state p {
+  margin: 0;
+}
+
+.panel.empty-state p {
+  line-height: 1.6;
+}
+
+.panel.empty-state .primary-button {
+  margin-top: 4px;
 }
 
 .loan-meta {

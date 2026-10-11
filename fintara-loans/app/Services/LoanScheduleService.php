@@ -59,7 +59,6 @@ class LoanScheduleService
         }
 
         // Rule A: round UP to a multiple of 10.
-        // The tiny tolerance avoids floating-point noise at exact multiples.
         $emi = ceil(($rawEmi - 1e-9) / 10) * 10;
 
         $balance = $this->money($principal);

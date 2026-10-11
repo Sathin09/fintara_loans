@@ -634,6 +634,41 @@ tfoot th {
   gap: 17px;
 }
 
+.password-input-wrap {
+  position: relative;
+  display: block;
+}
+
+.password-input-wrap input {
+  padding-right: 44px;
+}
+
+.password-visibility-button {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: #697689;
+  background: transparent;
+  transform: translateY(-50%);
+}
+
+.password-visibility-button:hover {
+  color: #294bb1;
+  background: #f3f6ff;
+}
+
+.password-visibility-button:focus-visible {
+  outline: 2px solid #5876d6;
+  outline-offset: 1px;
+}
+
 .auth-switch {
   margin: 24px 0 0;
   color: #778398;

@@ -427,9 +427,3 @@ Get-Content .\storage\logs\laravel.log -Tail 100
 - [ ] `npm run build` succeeds.
 - [ ] Setup instructions match the actual project files and environment.
 
-## 13. Important notes
-
-- The exact registration/login response shape depends on your actual `AuthController`; update the PowerShell examples if needed.
-- Confirm `StoreLoanRequest` and migrations match the controller fields (`principal`, `annual_rate`, `term_months`, `prepayments`, `late_days`, `currency`, and `user_id`).
-- If your database table or field names differ, adjust the examples rather than changing a working schema blindly.
-- These instructions assume the local ports and paths listed above. The grader should use the actual paths on their machine.

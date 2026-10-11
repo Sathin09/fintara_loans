@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Wallet, LogIn, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Wallet, LogIn, UserPlus } from "lucide-react";
 import { api, getApiError } from "../api/client";
 
 export default function AuthScreen({ onAuthenticated }) {
@@ -13,6 +13,7 @@ export default function AuthScreen({ onAuthenticated }) {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   function update(event) {
     setForm((current) => ({
@@ -101,18 +102,31 @@ export default function AuthScreen({ onAuthenticated }) {
 
           <label>
             Password
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={update}
-              autoComplete={
-                mode === "login" ? "current-password" : "new-password"
-              }
-              minLength={mode === "register" ? 12 : undefined}
-              maxLength={128}
-              required
-            />
+            <span className="password-input-wrap">
+              <input
+                type={mode === "login" && showPassword ? "text" : "password"}
+                name="password"
+                value={form.password}
+                onChange={update}
+                autoComplete={
+                  mode === "login" ? "current-password" : "new-password"
+                }
+                minLength={mode === "register" ? 12 : undefined}
+                maxLength={128}
+                required
+              />
+              {mode === "login" && (
+                <button
+                  type="button"
+                  className="password-visibility-button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              )}
+            </span>
           </label>
 
           {mode === "register" && (

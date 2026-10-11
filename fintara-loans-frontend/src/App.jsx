@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Calculator,
   CalendarDays,
-  Coins,
   FolderOpen,
 } from "lucide-react";
 
@@ -20,6 +19,7 @@ import {
 } from "./api/client";
 
 import AuthScreen from "./components/AuthScreen";
+import LoanAdjustmentForm from "./components/LoanAdjustmentForm";
 import LoanForm from "./components/LoanForm";
 import LoanTable from "./components/LoanTable";
 import SettlementPanel from "./components/SettlementPanel";
@@ -38,7 +38,6 @@ function payloadFromLoan(loan) {
 const tabs = [
   { id: "calculator", label: "Loan Calculator", Icon: Calculator },
   { id: "schedule", label: "Repayment Schedule", Icon: CalendarDays },
-  { id: "settlement", label: "Early Settlement", Icon: Coins },
   { id: "saved", label: "Saved Loans", Icon: FolderOpen },
 ];
 
@@ -223,6 +222,36 @@ export default function App() {
     }
   }
 
+  async function addLoanAdjustment(values) {
+    if (!selectedLoan) return;
+
+    setLoading(true);
+    setPageError("");
+    setNotice("");
+
+    try {
+      const { data } = await api.patch(
+        `/loans/${selectedLoan.id}/adjustments`,
+        values
+      );
+
+      setSelectedLoan(data.loan);
+      setLoans((current) =>
+        current.map((loan) =>
+          loan.id === data.loan.id ? data.loan : loan
+        )
+      );
+      setLoanPayload(payloadFromLoan(data.loan));
+      setSchedule(data.schedule);
+      setNotice("Installment adjustment added successfully.");
+    } catch (err) {
+      setPageError(getApiError(err));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function logout() {
     try {
       await api.post("/logout");
@@ -337,20 +366,19 @@ export default function App() {
       </nav>
 
       {/* Loan calculator */}
-      {activeTab === "calculator" && (
-        <section
-          id="panel-calculator"
-          role="tabpanel"
-          aria-labelledby="tab-calculator"
-          className="workspace-content"
-        >
-          <LoanForm
-            busy={loading}
-            onCalculate={calculate}
-            onSave={saveLoan}
-          />
-        </section>
-      )}
+      <section
+        id="panel-calculator"
+        role="tabpanel"
+        aria-labelledby="tab-calculator"
+        className="workspace-content"
+        hidden={activeTab !== "calculator"}
+      >
+        <LoanForm
+          busy={loading}
+          onCalculate={calculate}
+          onSave={saveLoan}
+        />
+      </section>
 
       {/* Repayment schedule */}
       {activeTab === "schedule" && (
@@ -363,27 +391,43 @@ export default function App() {
           {schedule ? (
             <>
               {selectedLoan && (
-                <section className="panel loan-meta">
-                  <div>
-                    <span>Saved loan code</span>
-                    <strong>{selectedLoan.loan_code}</strong>
-                  </div>
+                <>
+                  <section className="panel loan-meta">
+                    <div>
+                      <span>Saved loan code</span>
+                      <strong>{selectedLoan.loan_code}</strong>
+                    </div>
 
-                  <div>
-                    <span>Annual interest rate</span>
-                    <strong>
-                      {Number(selectedLoan.annual_rate).toFixed(4)}%
-                    </strong>
-                  </div>
+                    <div>
+                      <span>Annual interest rate</span>
+                      <strong>
+                        {Number(selectedLoan.annual_rate).toFixed(4)}%
+                      </strong>
+                    </div>
 
-                  <div>
-                    <span>Term</span>
-                    <strong>{selectedLoan.term_months} months</strong>
-                  </div>
-                </section>
+                    <div>
+                      <span>Term</span>
+                      <strong>{selectedLoan.term_months} months</strong>
+                    </div>
+                  </section>
+                  <LoanAdjustmentForm
+                    key={selectedLoan.id}
+                    schedule={schedule}
+                    busy={loading}
+                    onSubmit={addLoanAdjustment}
+                  />
+                </>
               )}
 
               <LoanTable schedule={schedule} />
+
+              {loanPayload && (
+                <SettlementPanel
+                  key={`${selectedLoan?.id ?? "unsaved-loan"}-${selectedLoan?.updated_at ?? ""}`}
+                  loanPayload={loanPayload}
+                  schedule={schedule}
+                />
+              )}
             </>
           ) : (
             <section className="panel empty-state">
@@ -391,57 +435,24 @@ export default function App() {
               <h3>No repayment schedule yet</h3>
               <p>
                 Calculate a loan or select a saved loan to view its
-                repayment schedule.
-              </p>
-
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => setActiveTab("calculator")}
-              >
-                <Calculator size={17} />
-                Open loan calculator
-              </button>
-            </section>
-          )}
-        </section>
-      )}
-
-      {/* Early settlement */}
-      {activeTab === "settlement" && (
-        <section
-          id="panel-settlement"
-          role="tabpanel"
-          aria-labelledby="tab-settlement"
-          className="workspace-content"
-        >
-          {schedule && loanPayload ? (
-            <SettlementPanel
-              key={selectedLoan?.id ?? "unsaved-loan"}
-              loanPayload={loanPayload}
-              schedule={schedule}
-            />
-          ) : (
-            <section className="panel empty-state">
-              <Coins size={30} />
-              <h3>No loan selected</h3>
-              <p>
-                Calculate a loan or open a saved loan before estimating
-                its early-settlement amount.
+                repayment schedule and calculate early settlement.
               </p>
 
               <button
                 type="button"
                 className="primary-button"
                 onClick={() =>
-                  setActiveTab(
-                    loans.length > 0 ? "saved" : "calculator"
-                  )
+                  setActiveTab(loans.length > 0 ? "saved" : "calculator")
                 }
               >
+                {loans.length > 0 ? (
+                  <FolderOpen size={17} />
+                ) : (
+                  <Calculator size={17} />
+                )}
                 {loans.length > 0
                   ? "Choose a saved loan"
-                  : "Calculate a loan"}
+                  : "Open loan calculator"}
               </button>
             </section>
           )}

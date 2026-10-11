@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AddLoanAdjustmentRequest;
 use App\Http\Requests\StoreLoanRequest;
 use App\Models\Loan;
 use App\Services\LoanScheduleService;
@@ -117,6 +118,67 @@ class LoanController extends Controller
 
         return response()->json([
             'loan' => $record,
+        ]);
+    }
+
+    public function addAdjustment(
+        AddLoanAdjustmentRequest $request,
+        string $loan
+    ): JsonResponse {
+        $record = Loan::query()
+            ->where('user_id', $request->user()->id)
+            ->where('id', $loan)
+            ->firstOrFail();
+        $data = $request->validated();
+        $month = (int) $data['month'];
+
+        if ($month > $record->term_months) {
+            throw ValidationException::withMessages([
+                'month' => [
+                    "Month must be between 1 and {$record->term_months}.",
+                ],
+            ]);
+        }
+
+        $prepayments = $record->prepayments ?? [];
+        $lateDays = $record->late_days ?? [];
+
+        if (isset($data['prepayment'])) {
+            $prepayments[$month] = $this->scheduleService->money(
+                (float) ($prepayments[$month] ?? 0)
+                    + (float) $data['prepayment']
+            );
+        }
+
+        if (isset($data['late_days'])) {
+            $lateDays[$month] = (int) $data['late_days'];
+        }
+
+        $schedule = $this->scheduleService->calculate(
+            (float) $record->principal,
+            (float) $record->annual_rate,
+            (int) $record->term_months,
+            $prepayments,
+            $lateDays
+        );
+
+        if ($month > $schedule['instalments']) {
+            throw ValidationException::withMessages([
+                'month' => [
+                    'Adjustment month exceeds the actual repayment schedule.',
+                ],
+            ]);
+        }
+
+        $record->update([
+            'prepayments' => $prepayments,
+            'late_days' => $lateDays,
+        ]);
+
+        return response()->json([
+            'message' => 'Installment adjustment added successfully.',
+            'loan' => $record->fresh(),
+            'schedule' => $schedule,
         ]);
     }
 

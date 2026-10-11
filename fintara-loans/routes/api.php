@@ -19,18 +19,10 @@ Route::middleware('throttle:5,1')->group(function () {
 // All loan operations require a valid Sanctum bearer token.
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-
     Route::post('/loans', [LoanController::class, 'store']);
     Route::get('/loans', [LoanController::class, 'index']);
     Route::get('/loans/{loan}', [LoanController::class, 'show']);
-
-    Route::post('/loans/schedule', [
-        LoanCalculationController::class,
-        'schedule',
-    ]);
-
-    Route::post('/loans/settlement', [
-        LoanCalculationController::class,
-        'settlement',
-    ]);
+    Route::patch('/loans/{loan}/adjustments', [LoanController::class,'addAdjustment',]);
+    Route::post('/loans/schedule', [LoanCalculationController::class,'schedule',]);
+    Route::post('/loans/settlement', [LoanCalculationController::class,'settlement',]);
 });
